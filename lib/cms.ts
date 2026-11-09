@@ -1,0 +1,10 @@
+import {database,boundedBody,json} from './submissions';
+import seed from './catalog-seed';
+export const categoryDefaults=[{id:'art',ru:'Искусство и объекты',en:'Art & objects'},{id:'fragrance',ru:'Парфюмерия',en:'Fragrance'},{id:'watches',ru:'Часы',en:'Watches'},{id:'jewellery',ru:'Украшения',en:'Jewellery'},{id:'digital',ru:'Цифровое искусство',en:'Digital art'}];
+export async function products(all=false){const rows=await database().prepare('SELECT * FROM cms_products').all();const map=new Map(seed.map((p:any,i:number)=>[p.id,{...p,status:'published',revision:0,currency:'AED',availability:p.external?'external':'concept',position:i,featured:['form-01','sillage-01','dune-rhythm','golden-line','orbital-object','blue-hour','quiet-time','figue-silence'].includes(p.id),images:[p.img]}]));for(const row of rows.results as any[])map.set(row.id,{...JSON.parse(row.data),id:row.id,status:row.status,revision:row.revision});return [...map.values()].filter((p:any)=>all||p.status==='published').sort((a:any,b:any)=>(a.position||0)-(b.position||0))}
+export async function settings(){const row:any=await database().prepare("SELECT * FROM cms_settings WHERE id='site'").first();return {revision:row?.revision||0,categories:categoryDefaults,...(row?JSON.parse(row.data):{})}}
+export async function body(request:Request){return JSON.parse(new TextDecoder().decode(await boundedBody(request,200000)))}
+export function text(v:unknown,max=5000){if(typeof v!=='string'||v.length>max)throw Error('VALIDATION');return v.trim()}
+export function pair(v:any,max=5000){if(!v||typeof v!=='object')throw Error('VALIDATION');return {ru:text(v.ru,max),en:text(v.en,max)}}
+export function imagePath(v:unknown){const s=text(v,200);if(!/^(?:[a-zA-Z0-9_-]+\.(?:webp|png|jpe?g|svg)|\/api\/media\/[a-f0-9-]+)$/.test(s))throw Error('VALIDATION');return s}
+export function failure(e:any){console.error('CMS operation failed',e?.message);return json({error:e?.message==='VALIDATION'?'Проверьте заполнение полей.':'Не удалось сохранить. Попробуйте ещё раз.'},e?.message==='VALIDATION'?400:503)}

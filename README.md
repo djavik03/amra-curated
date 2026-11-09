@@ -1,14 +1,32 @@
 # AMRA Curated
 
-Bilingual Russian / English visual storefront prototype. Buildless HTML, CSS and JavaScript in `dist/`.
+Bilingual RU/EN storefront with seller proposals and a protected team inbox. Vinext on Cloudflare Workers with D1 and R2.
 
-## Preview scope
+## Source
 
-Demonstration catalogue only. Enquiries are prepared locally and can be copied; no messages, purchases or payments are sent. No administration panel or backend is included in this first iteration. Favourites and language preferences are saved in the visitor's browser. Hash routes support product and category links.
+- `public/app.js`, `style.css`, `harmony.css`: existing storefront and demo catalogue.
+- `public/seller.js`, `seller.css`: seller form at `/#/sell` and home teaser.
+- `public/admin.js`, `admin.css`: administration at `/admin`.
+- `site/*.html`: page shells; generated TypeScript HTML imports are refreshed by `scripts/prepare-pages.mjs` before dev/build.
+- `app/api/submissions`: anonymous multipart submission with validation, upload limits and rate limiting.
+- `app/api/admin`: authenticated list/detail/update and private photographs.
+- `db/schema.ts`, `drizzle/`: D1 schema and migrations.
 
-## Editing
+## Development
 
-The `items` array and `T` dictionary in `dist/app.js` hold sample products and interface copy. `dist/style.css` contains responsive styles. The future administration phase should replace the sample data with a validated product API, configure verified contact channels and genuine policies, and preserve the same customer-facing layout.
+Install with the Sites dependency helper, then `pnpm dev`. Build with the Sites build helper. Run `node tests/submissions-local.mjs` for handler tests using SQLite and an in-memory bucket; `pnpm exec tsc --noEmit` for types.
+
+The hosting manifest binds D1 as `DB` and private R2 as `BUCKET`. Migration SQL is in `drizzle/`. Never commit local runtime state or secrets.
+
+## Team access
+
+Set runtime secret `ADMIN_EMAILS` to a comma-separated list of authorized ChatGPT account emails. Requests require both trusted authenticated user ID and matching email; email alone is insufficient. Visitors can submit without signing in. `/admin` prompts for ChatGPT sign-in. Every data and photograph API checks team access, including direct image requests.
+
+## Proposal workflow
+
+Owners submit details, 1–6 JPG/PNG/WebP photographs (4 MiB each, 16 MiB combined), contacts, preferred buyout/consignment format and consent. Records persist in D1; photos in private R2. Team members can search, filter, review details/photos, change status and save notes. Revision checks prevent overwriting concurrent edits. Status changes do not send messages or publish products automatically.
+
+This is the first admin module. Catalogue data is still authored in `public/app.js`. Existing buyer enquiries are prepared locally for copying; automated notifications, payments and catalogue editing are not connected. Seller proposals are real, separate from the demonstration inventory.
 
 ## Assets
 
@@ -26,16 +44,6 @@ Illustrative stock photographs from Unsplash, downloaded and converted to WebP:
 
 Stock photos do not establish brand relationships, product authenticity, ownership, or available inventory. Replace them with verified product photography for commercial release.
 
-## Visual redesign
+## Atelier hero
 
-The second design uses a dark oxblood and graphite palette, copper accents, cinematic campaign imagery, a new horizontal wordmark, direct category navigation, four visual category tiles plus a digital art entry, a product selection, a dedicated fragrance feature, digital art and a three-step acquisition explanation. RU/EN and the demonstration enquiry flow remain supported.
-
-New built-in Imagegen project assets: `campaign.webp` (landscape bronze sculpture, amber bottle and chrome sphere on burgundy stone with left negative space); `scent-noir.webp` (portrait amber glass bottle and bronze cap on reddish basalt in warm spotlight). Both are fictional campaign concepts, not supplier photos or evidence of available inventory.
-
-Design references reviewed: The Future Perfect (https://www.thefutureperfect.com/), The Oblist (https://oblist.com/), Aesop (https://www.aesop.ae/), Byredo (https://www.byredo.com/us_en/c/perfume/personal-fragrances/categories/perfumes). These informed category clarity and product presentation; no brand affiliation or copied page design is implied.
-
-## Collection and motion update
-
-The demonstration collection now contains 27 pieces (10 art/objects, 6 fragrances, 2 watches, 4 jewellery and 5 digital concepts). New SVG studies are original code-authored illustrations, not supplier inventory or minted tokens. Existing illustrative photography is reused for additional product concepts.
-
-Home now alternates oxblood, warm ivory, forest green and violet sections. The light editorial gallery has eight pieces and staggered positioning. AMRA Compass offers four mood choices with animated image, story and palette changes and a working product link. Motion includes introductory typography, scroll reveals, hero parallax, a moving wordmark strip, image movement on mouse hover, modal entrance, a reading-progress line and gently animated digital art. Reduced-motion preferences disable animations and reveal hiding. Existing catalogue, search, favourites, language switching and local enquiry preparation remain supported.
+The first screen uses `public/atelier-hero.js`, `public/atelier-hero.css` and `public/assets/hero-atelier.webp`. Text, CTA and category navigation are real HTML. The warm gallery background is illustrative imagery. Mobile layout stacks readable copy above a crop dedicated to the display objects. The Orbit implementation was removed; seller submissions and administration are unchanged.
